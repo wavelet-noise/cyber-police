@@ -47,7 +47,7 @@ def main():
                     fullname = get_user_name(event)
 
                     message_tuple = (fullname, event.user_id, event.text)
-                    print(message_tuple)
+                    print('chat ' + str(chat_id) + ': ' + str(message_tuple))
                     with open(str(chat_id)+'-log.txt', 'a+') as f:
                         f.write(str(message_tuple))
                         f.write('\n')
