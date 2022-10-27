@@ -14,10 +14,15 @@ ACCESS_TOKEN = ""
 with open('token.txt') as f:
     ACCESS_TOKEN = f.readline()
 
-CHAT_ID = 0
+CHAT_ID = []
 
 with open('chats.txt') as f:
-    CHAT_ID = int(f.readline())
+    for line in f.readlines():
+        try:
+            CHAT_ID.append(int(line))
+        except Exception as err:
+            print(err)
+
 
 vk_session = VkApi(token=ACCESS_TOKEN)
 vk = vk_session.get_api()
@@ -37,14 +42,15 @@ def get_user_name(event):
 def main():
     for event in longpoll.listen():
         try:
-            if event.type == VkEventType.MESSAGE_NEW and (event.chat_id == CHAT_ID or event.chat_id == CHAT_ID):
-                fullname = get_user_name(event)
+            for chat_id in CHAT_ID:
+                if event.type == VkEventType.MESSAGE_NEW and event.chat_id == chat_id:
+                    fullname = get_user_name(event)
 
-                message_tuple = (fullname, event.user_id, event.text)
-                print(message_tuple)
-                with open(str(CHAT_ID)+'-log.txt', 'a+') as f:
-                    f.write(str(message_tuple))
-                    f.write('\n')
+                    message_tuple = (fullname, event.user_id, event.text)
+                    print(message_tuple)
+                    with open(str(chat_id)+'-log.txt', 'a+') as f:
+                        f.write(str(message_tuple))
+                        f.write('\n')
         except Exception as err:
             print(err)
 
