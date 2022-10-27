@@ -13,17 +13,23 @@ def uniqueid():
 
 ACCESS_TOKEN = ''
 
-with open('token.txt') as f:
-    ACCESS_TOKEN = f.readline()
+try:
+    with open('token.txt') as f:
+        ACCESS_TOKEN = f.readline()
+except FileNotFoundError as err:
+    print('create token.txt with access token, one line')
 
 CHAT_ID = []
 
-with open('chats.txt') as f:
-    for line in f.readlines():
-        try:
-            CHAT_ID.append(int(line))
-        except Exception as err:
-            print(err)
+try:
+    with open('chats.txt') as f:
+        for line in f.readlines():
+                CHAT_ID.append(int(line))
+except FileNotFoundError as err:
+    print('create chats.txt with chad ids, one id in one line')
+except Exception as err:
+    print(err)
+    print('use one line for every chat id')
 
 vk_session = VkApi(token=ACCESS_TOKEN)
 vk = vk_session.get_api()
