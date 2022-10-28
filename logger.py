@@ -4,52 +4,32 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 import random
 import time
 import re
+import datetime
 
-def uniqueid():
-    seed = random.getrandbits(32)
-    while True:
-       yield seed
-       seed += 1
-
-ACCESS_TOKEN = ''
-
-try:
-    with open('token.txt') as f:
-        ACCESS_TOKEN = f.readline()
-except FileNotFoundError as err:
-    print('create token.txt with access token, one line')
-
-CHAT_ID = []
-
-try:
-    with open('chats.txt') as f:
-        for line in f.readlines():
-                CHAT_ID.append(int(line))
-except FileNotFoundError as err:
-    print('create chats.txt with chad ids, one id in one line')
-except Exception as err:
-    print(err)
-    print('use one line for every chat id')
-
-vk_session = VkApi(token=ACCESS_TOKEN)
-vk = vk_session.get_api()
-longpoll = VkLongPoll(vk_session)
-
-known_users = {}
-
-def get_user_name(id):
-    if id in known_users:
-        return known_users[id]
-    
-    response = vk.users.get(user_ids = id)
-    name = response[0]['first_name'] +  ' ' + response[0]['last_name']
-    known_users[id] = name
-    return name
+from common import *
 
 def main():
     for event in longpoll.listen():
         try:
-            for chat_id in CHAT_ID:
+            if len(event.raw) >=6:
+                meta6 = event.raw[6]
+                chat_id = event.raw[3] - 2000000000
+                print('meta6: ' + str(meta6))
+                if 'source_act' in meta6 and 'source_mid' in meta6 and 'from' in meta6:
+                    output = {}
+                    output['source_act'] = meta6['source_act']
+                    output['source_mid'] = int(meta6['source_mid'])
+                    output['source_name'] = get_user_name(output['source_mid'])
+                    output['from'] = int(meta6['from'])
+                    output['from_name'] = get_user_name(output['from'])
+
+                    log_and_output(chat_id, output, 'acts')
+                    #chat_id = event.chat_id
+                    #№print(str(chat_id) + ': chat_kick_user ' + str(event.action['member_id']))
+                    #with open(str(chat_id)+'-kicked.txt', 'a+') as f:
+                    #  f.write(event.action['member_id'])
+                    #   f.write('\n')
+            for chat_id in CHAT_ID:                
                 if event.chat_id == chat_id:
                     if event.type == VkEventType.MESSAGE_NEW:
                         fullname = get_user_name(event.user_id)
@@ -59,6 +39,9 @@ def main():
                         message_dict['from_id'] = event.user_id
                         message_dict['text'] = event.text
                         message_dict['type'] = 'message'
+
+                        current_time = datetime.datetime.now()
+                        message_dict['timestamp'] = str(current_time)
 
                         meta_data = event.raw[7]
                         if 'reply' in meta_data:
@@ -93,6 +76,9 @@ def main():
                         message_dict['from_id'] = event.user_id
                         message_dict['text'] = event.text
                         message_dict['type'] = 'edit'
+
+                        current_time = datetime.datetime.now()
+                        message_dict['timestamp'] = str(current_time)
 
                         print(str(chat_id) + ': ' + str(message_dict))
                         with open(str(chat_id)+'-log.txt', 'a+') as f:
